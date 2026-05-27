@@ -20,49 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // Firestore에서 약관 항목 불러오기
-    loadTermsItems();
-
-    function loadTermsItems() {
-        var container = document.getElementById('termsDetailGroup');
-        var loading = document.getElementById('termsLoading');
-
-        db.collection('terms_items')
-            .orderBy('order', 'asc')
-            .get()
-            .then(function (snapshot) {
-                loading.style.display = 'none';
-
-                if (snapshot.empty) {
-                    container.innerHTML = '<div class="terms-empty">등록된 약관 항목이 없습니다.</div>';
-                    return;
-                }
-
-                var html = '';
-                var termIndex = 0;
-                snapshot.forEach(function (doc) {
-                    termIndex++;
-                    var data = doc.data();
-                    html += '<div class="terms-detail-section">';
-                    html += '<div class="terms-detail-title">' + termIndex + '. ' + escapeHtml(data.title || '') + '</div>';
-                    var lines = (data.content || '').split('\n');
-                    lines.forEach(function (line) {
-                        var trimmed = line.trim();
-                        if (trimmed) {
-                            html += '<div class="terms-detail-line"><span class="terms-dot">·</span>' + escapeHtml(trimmed) + '</div>';
-                        }
-                    });
-                    html += '</div>';
-                });
-                container.innerHTML = html;
-            })
-            .catch(function (error) {
-                console.error('약관 항목 로드 실패:', error);
-                loading.style.display = 'none';
-                container.innerHTML = '<div class="terms-empty">약관 항목을 불러올 수 없습니다.</div>';
-            });
-    }
-
     // 연락처: 숫자만, 최대 11자리
     phoneInput.addEventListener('input', function () {
         this.value = this.value.replace(/[^0-9]/g, '').slice(0, 11);
@@ -165,11 +122,4 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 2500);
     }
 
-    // XSS 방지
-    function escapeHtml(str) {
-        if (!str) return '';
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-    }
 });

@@ -153,47 +153,46 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
     // ===== 약관 관리 탭 =====
-    var btnAddTerm = document.getElementById('btnAddTerm');
     var termsFormWrap = document.getElementById('termsFormWrap');
-    var termTitle = document.getElementById('termTitle');
     var termContent = document.getElementById('termContent');
     var btnTermSave = document.getElementById('btnTermSave');
-    var btnTermCancel = document.getElementById('btnTermCancel');
-    var termsListContainer = document.getElementById('termsListContainer');
     var termsLoadingEl = document.getElementById('termsLoading');
-    var termsEmpty = document.getElementById('termsEmpty');
+    var termsPreview = document.getElementById('termsPreview');
 
-    var editingTermId = null;
+    // Firestore에서 약관 내용 불러오기
+    db.collection('terms_content').doc('main').get()
+        .then(function (doc) {
+            termsLoadingEl.style.display = 'none';
+            termsFormWrap.style.display = '';
 
-    // 항목 추가 버튼
-    btnAddTerm.addEventListener('click', function () {
-        editingTermId = null;
-        termTitle.value = '';
-        termContent.value = '';
-        termsFormWrap.style.display = '';
-        btnAddTerm.style.display = 'none';
-        termTitle.focus();
-    });
+            if (doc.exists) {
+                var data = doc.data();
+                termContent.value = data.content || '';
+                termsPreview.innerHTML = data.content || '<p style="color:#999;">약관 내용을 입력하면 미리보기가 표시됩니다.</p>';
+            }
+        })
+        .catch(function (error) {
+            console.error('약관 내용 로드 실패:', error);
+            termsLoadingEl.style.display = 'none';
+            termsFormWrap.style.display = '';
+        });
 
-    // 취소 버튼
-    btnTermCancel.addEventListener('click', function () {
-        termsFormWrap.style.display = 'none';
-        btnAddTerm.style.display = '';
-        editingTermId = null;
+    // textarea 입력 시 미리보기 업데이트
+    termContent.addEventListener('input', function () {
+        var val = termContent.value.trim();
+        if (val) {
+            termsPreview.innerHTML = val;
+        } else {
+            termsPreview.innerHTML = '<p style="color:#999;">약관 내용을 입력하면 미리보기가 표시됩니다.</p>';
+        }
     });
 
     // 저장 버튼
     btnTermSave.addEventListener('click', function () {
-        var title = termTitle.value.trim();
         var content = termContent.value.trim();
 
-        if (!title) {
-            showToast('약관 내용을 입력해주세요.');
-            termTitle.focus();
-            return;
-        }
         if (!content) {
-            showToast('상세 내용을 입력해주세요.');
+            showToast('약관 내용을 입력해주세요.');
             termContent.focus();
             return;
         }
@@ -201,132 +200,20 @@ document.addEventListener('DOMContentLoaded', function () {
         btnTermSave.disabled = true;
         btnTermSave.textContent = '저장 중...';
 
-        if (editingTermId) {
-            // 수정
-            db.collection('terms_items').doc(editingTermId).update({
-                title: title,
-                content: content,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            }).then(function () {
-                showToast('약관 항목이 수정되었습니다.');
-                resetTermsForm();
-            }).catch(function (error) {
-                console.error('수정 실패:', error);
-                showToast('수정에 실패했습니다.');
-                btnTermSave.disabled = false;
-                btnTermSave.textContent = '저장';
-            });
-        } else {
-            // 신규 등록
-            db.collection('terms_items').get().then(function (snapshot) {
-                var newOrder = snapshot.size + 1;
-                return db.collection('terms_items').add({
-                    title: title,
-                    content: content,
-                    order: newOrder,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            }).then(function () {
-                showToast('약관 항목이 등록되었습니다.');
-                resetTermsForm();
-            }).catch(function (error) {
-                console.error('등록 실패:', error);
-                showToast('등록에 실패했습니다.');
-                btnTermSave.disabled = false;
-                btnTermSave.textContent = '저장';
-            });
-        }
-    });
-
-    function resetTermsForm() {
-        termsFormWrap.style.display = 'none';
-        btnAddTerm.style.display = '';
-        termTitle.value = '';
-        termContent.value = '';
-        editingTermId = null;
-        btnTermSave.disabled = false;
-        btnTermSave.textContent = '저장';
-    }
-
-    // 약관 항목 실시간 조회 (onSnapshot)
-    db.collection('terms_items')
-        .orderBy('order', 'asc')
-        .onSnapshot(function (snapshot) {
-            termsLoadingEl.style.display = 'none';
-
-            if (snapshot.empty) {
-                termsEmpty.style.display = 'block';
-                termsListContainer.innerHTML = '';
-                return;
-            }
-
-            termsEmpty.style.display = 'none';
-
-            var html = '';
-            var termIndex = 0;
-            snapshot.forEach(function (doc) {
-                termIndex++;
-                var data = doc.data();
-                var id = doc.id;
-                var detailLines = (data.content || '').split('\n');
-                var detailHtml = '';
-                detailLines.forEach(function (line) {
-                    var trimmed = line.trim();
-                    if (trimmed) {
-                        detailHtml += '<div class="terms-admin-detail-line">' + escapeHtml(trimmed) + '</div>';
-                    }
-                });
-
-                html += '<div class="terms-admin-item" data-id="' + id + '">' +
-                    '<div class="terms-admin-content">' +
-                    '<div class="terms-admin-title">' + termIndex + '. ' + escapeHtml(data.title || '') + '</div>' +
-                    '<div class="terms-admin-detail">' + detailHtml + '</div>' +
-                    '</div>' +
-                    '<div class="terms-admin-actions">' +
-                    '<button class="btn-term-edit" data-id="' + id + '" data-title="' + escapeAttr(data.title || '') + '" data-content="' + escapeAttr(data.content || '') + '">수정</button>' +
-                    '<button class="btn-term-delete" data-id="' + id + '">삭제</button>' +
-                    '</div>' +
-                    '</div>';
-            });
-
-            termsListContainer.innerHTML = html;
-
-            // 수정 버튼 이벤트
-            termsListContainer.querySelectorAll('.btn-term-edit').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    editingTermId = this.dataset.id;
-                    termTitle.value = this.dataset.title;
-                    termContent.value = this.dataset.content;
-                    termsFormWrap.style.display = '';
-                    btnAddTerm.style.display = 'none';
-                    termTitle.focus();
-                    window.scrollTo({ top: termsFormWrap.offsetTop - 80, behavior: 'smooth' });
-                });
-            });
-
-            // 삭제 버튼 이벤트
-            termsListContainer.querySelectorAll('.btn-term-delete').forEach(function (btn) {
-                btn.addEventListener('click', function () {
-                    var docId = this.dataset.id;
-                    if (!confirm('이 약관 항목을 삭제하시겠습니까?')) return;
-
-                    db.collection('terms_items').doc(docId).delete()
-                        .then(function () {
-                            showToast('약관 항목이 삭제되었습니다.');
-                        })
-                        .catch(function (error) {
-                            console.error('삭제 실패:', error);
-                            showToast('삭제에 실패했습니다.');
-                        });
-                });
-            });
-        }, function (error) {
-            console.error('약관 항목 조회 실패:', error);
-            termsLoadingEl.style.display = 'none';
-            termsEmpty.style.display = 'block';
-            termsEmpty.querySelector('p').textContent = '약관 항목을 불러올 수 없습니다.';
+        db.collection('terms_content').doc('main').set({
+            content: content,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function () {
+            showToast('약관 내용이 저장되었습니다.');
+            btnTermSave.disabled = false;
+            btnTermSave.textContent = '저장';
+        }).catch(function (error) {
+            console.error('저장 실패:', error);
+            showToast('저장에 실패했습니다.');
+            btnTermSave.disabled = false;
+            btnTermSave.textContent = '저장';
         });
+    });
 
     // ===== 공통 유틸 =====
     function formatDate(timestamp) {
@@ -359,11 +246,6 @@ document.addEventListener('DOMContentLoaded', function () {
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(str));
         return div.innerHTML;
-    }
-
-    function escapeAttr(str) {
-        if (!str) return '';
-        return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '&#10;');
     }
 
     function showToast(message) {
