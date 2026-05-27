@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
             showToast('잠시 후 다시 시도해주세요.');
             isSubmitting = false;
             submitBtn.disabled = false;
-            submitBtn.textContent = '카드 만들기';
+            submitBtn.textContent = '카드 신청하기';
         });
     });
 
