@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>이벤트 신청</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <!-- 메인 -->
+    <main class="main-content">
+        <div class="container">
+            <!-- 안내 섹션 -->
+            <section class="info-section">
+                <h1 class="info-title">이벤트 신청</h1>
+                <p class="info-desc">아래 정보를 입력하시고 신청을 진행해주세요.</p>
+            </section>
+
+            <!-- 입력 폼 -->
+            <form id="cardForm" class="card-form" novalidate>
+                <!-- 이름 -->
+                <div class="form-group">
+                    <label for="userName" class="form-label">이름</label>
+                    <input type="text" id="userName" class="form-input" placeholder="이름을 입력해주세요" autocomplete="name"
+                        required>
+                    <span class="form-error" id="nameError">이름을 2자 이상 입력해주세요.</span>
+                </div>
+
+                <!-- 연락처 -->
+                <div class="form-group">
+                    <label for="userPhone" class="form-label">연락처</label>
+                    <input type="tel" id="userPhone" class="form-input" placeholder="'-' 없이 숫자만 입력" autocomplete="tel"
+                        required>
+                    <span class="form-error" id="phoneError">올바른 휴대전화 번호를 입력해주세요. (예: 01012345678)</span>
+                </div>
+
+                <!-- 이용약관 동의 -->
+                <div class="form-group consent-group">
+                    <div class="consent-header">
+                        <span class="consent-title">이용약관 동의</span>
+                        <div class="consent-radio">
+                            <label class="radio-label">
+                                <input type="radio" name="agreeTerms" value="agree" checked>
+                                <span class="radio-custom"></span>
+                                <span class="radio-text">동의</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="agreeTerms" value="disagree">
+                                <span class="radio-custom"></span>
+                                <span class="radio-text">미동의</span>
+                            </label>
+                        </div>
+                    </div>
+                    <span class="form-error" id="termsError">이용약관에 동의해주세요.</span>
+                </div>
+
+                <!-- 약관 항목 -->
+                <div class="terms-detail-group" id="termsDetailGroup">
+                    <div class="terms-detail-loading" id="termsLoading">
+                        <div class="spinner" style="width:24px;height:24px;border-width:3px;margin:0 auto 8px;"></div>
+                        <p style="font-size:0.8rem;color:#999;">약관 항목 불러오는 중...</p>
+                    </div>
+                </div>
+
+                <!-- 카드 만들기 버튼 -->
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    카드 만들기
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <p>&copy; 2026 All rights reserved.</p>
+    </footer>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="js/firebase-config.js"></script>
+    <script src="js/app.js"></script>
+</body>
+
+</html>
