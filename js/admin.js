@@ -94,9 +94,22 @@ document.addEventListener('DOMContentLoaded', function () {
         .onSnapshot(function (snapshot) {
             loadingState.style.display = 'none';
             var docs = snapshot.docs;
-            totalCount.textContent = '총 ' + docs.length + '건';
 
-            if (docs.length === 0) {
+            // 이름+연락처 중복 제거 (createdAt desc 정렬이므로 먼저 나온 것이 최신)
+            var seen = {};
+            var uniqueDocs = [];
+            docs.forEach(function (doc) {
+                var data = doc.data();
+                var key = (data.name || '') + '|' + (data.phone || '');
+                if (!seen[key]) {
+                    seen[key] = true;
+                    uniqueDocs.push(doc);
+                }
+            });
+
+            totalCount.textContent = '총 ' + uniqueDocs.length + '건';
+
+            if (uniqueDocs.length === 0) {
                 emptyState.style.display = 'block';
                 tableWrap.style.display = 'none';
                 tableBody.innerHTML = '';
@@ -110,7 +123,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var tableHtml = '';
             var cardHtml = '';
 
-            docs.forEach(function (doc, index) {
+            uniqueDocs.forEach(function (doc, index) {
                 var data = doc.data();
                 var dateStr = formatDate(data.createdAt);
                 var safeName = escapeHtml(data.name || '');
